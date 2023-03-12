@@ -1,0 +1,332 @@
+\documentclass[a4paper]{article}
+\usepackage[14pt]{extsizes}
+\usepackage{tempora}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{indentfirst}
+\usepackage{graphicx}
+\usepackage{physics}
+\usepackage{parskip}
+\usepackage{listings}
+\usepackage{array} 
+\usepackage{color}
+\usepackage{setspace,amsmath}
+\linespread{1.5}
+\usepackage[left=20mm, top=15mm, right=20mm, bottom=20mm, nohead, footskip=15mm]{geometry} % настройки полей документа
+\graphicspath{ {./images/} }
+\setlength{\parindent}{5ex}
+\setlength{\parskip}{1em}
+\usepackage{subcaption}
+
+
+
+\begin{document} % начало документа
+
+% НАЧАЛО ТИТУЛЬНОГО ЛИСТА
+\begin{center}
+
+\normalsize{ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ БЮДЖЕТНОЕ ОБРАЗОВАТЕЛЬНОЕ}\\
+\normalsize{УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ}\\
+\normalsize{«МОСКОВСКИЙ ГОСУДАРСТВЕННЫЙ УНИВЕРСИТЕТ \\ имени М.В. ЛОМОНОСОВА»}\\
+\hfill \break
+\normalsize{ФИЗИЧЕСКИЙ ФАКУЛЬТЕТ}\\
+\normalsize{КАФЕДРА КВАНТОВОЙ ЭЛЕКТРОНИКИ}\\
+\hfill\break
+\hfill \break
+\hfill \break
+\normalsize{ОТЧЁТ}\\
+\normalsize{по практическому заданию №2}\\
+\normalsize{по курсу}\\
+\normalsize{<<ЧИСЛЕННЫЕ МЕТОДЫ В ФИЗИКЕ>>}\\
+\hfill \break
+\normalsize{Cтудентки 427  группы \\ Кузьменок Дианы Андреевны \\
+(u0 = 2.1)}
+\end{center}
+\hfill \break
+\hfill \break
+\hfill \break
+\hfill \break
+\hfill \break
+\hfill \break
+\begin{center}
+\normalsize{Москва \\ 2023}
+\end{center}
+
+\thispagestyle{empty} % выключаем отображение номера для этой страницы
+
+% КОНЕЦ ТИТУЛЬНОГО ЛИСТА
+\newpage
+
+\tableofcontents % Вывод содержания
+\newpage
+
+\section{Постановка задачи}
+Численно решить задачу Коши:\\
+\begin{center}
+\begin{math}
+ \begin{cases}
+ \dv[2]{u}{t}+u=0\\
+ u(t=0)=u_{0}\\
+ \dv{u}{t}|_{t=o}=v(t=0)=v_{0}
+ \end{cases}
+\end{math}
+\end{center}
+на отрезке $t=[0, 20]$ для $v_{0}=0, u_{0}=2.1$
+\section{Методы}
+Для решения использована двухслойная схема с перешагиванием (Leapfrog):
+\begin{center}
+$u_{n+1}=u_{n-1}+f_{n} * 2\Delta t\\
+u_{n+2}=u_{n}+f_{n+1} * 2\Delta t$
+\end{center}
+Аналитическое решение уравнения: $u(t)=2.1*cos(t)$\\
+Это уравнение осцилляторного типа. Граница устойчивости $\Delta 
+ t=\frac{1}{\omega}=1$\\
+ Уравнение второго порядка удобно привести к виду:
+ \begin{center}
+\begin{math}
+ \begin{cases}
+ \dv{v}{t}=-u\\
+ \dv{u}{t}=v\\
+ u(t=0)=2.1\\
+ v(t=0)=0
+ \end{cases}
+\end{math}
+\end{center}
+Для этой системы схема записывается следующим образом: 
+ \begin{center}
+\begin{math}
+ \begin{cases}u_{n+1}=u_{n-1}+v_{n} * 2\Delta t\\
+v_{n+1}=v_{n-1}-u_{n} * 2\Delta t \end{cases}
+\end{math}
+\end{center}
+\hfill \break
+Для реализации схемы необходимо знать не только начальные значения, но и $u_{1}, v_{1}$. Для этого при решении задачи будет использовано аналитическое решение и схема Эйлера:
+ \begin{center}
+\begin{math}
+ \begin{cases}u_{n+1}=u_{n}+v_{n} *\Delta t\\
+v_{n+1}=v_{n}-u_{n} *\Delta t \end{cases}
+\end{math}
+\end{center}
+(Схема записана для исследуемой системы)
+\section{Листинг программы}
+\lstset{
+language=Python,% выбор языка для подсветки
+basicstyle=\small\sffamily, % размер и начертание шрифта для подсветки кода
+commentstyle=\color[rgb]{0.5,0.85,0.5},
+numbers=left, % где поставить нумерацию строк (слева\справа)
+numberstyle=\footnotesize, % размер шрифта для номеров строк
+stepnumber=1, % размер шага между двумя номерами строк
+numbersep=5pt, % как далеко отстоят номера строк от подсвечиваемого кода
+backgroundcolor=\color{white}, % цвет фона подсветки - используем \usepackage{color}
+showspaces=false, % показывать или нет пробелы специальными отступами
+showstringspaces=false, % показывать или нет пробелы в строках
+showtabs=false, % показывать или нет табуляцию в строках
+frame=false,  % рисовать рамку вокруг кода
+tabsize=2, % размер табуляции по умолчанию равен 2 пробелам
+captionpos=t, % позиция заголовка вверху [t] или внизу [b] 
+breaklines=true, % автоматически переносить строки (да\нет)
+breakatwhitespace=false, % переносить строки только если есть пробел
+escapeinside={\%*}{*)} % если нужно добавить комментарии в коде
+}
+\begin{lstlisting}[label=some-code]
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+# Input data
+v0 = 0; u0 = (50 + 12 + 1) / 30
+step1 = 1; step2 = 0.5; step3 = 0.2
+t0 = 0; tf = 20
+
+
+#Analytical 
+ua = lambda x: u0 * np.cos(x)
+va = lambda x: -u0 * np.sin(x)
+
+#Euler
+def Eu(u, v, step):
+  return([u + v * step, v - u * step])
+
+#Leapfrog
+def Lf(u0, u1, v0, v1, step):
+  return([u0 + 2 * v1 * step, v0 - 2 * u1 * step])
+
+
+# #Stability limit
+N1 = int(tf / step1) + 1
+u1 = np.zeros(N1); v1 = np.zeros(N1)
+u1[0] = u0; v1[0] = v0
+u1[1] = ua(step1); v1[1] = va(step1)
+
+for i in range(2, N1):
+  u1[i] = Lf(u1[i - 2], u1[i - 1], v1[i - 2], v1[i - 1], step1)[0]
+  v1[i] = Lf(u1[i - 2], u1[i - 1], v1[i - 2], v1[i - 1], step1)[1]
+
+
+#Stability limit/2
+N2 = int(tf / step2) + 1
+u2 = np.zeros(N2); v2 = np.zeros(N2)
+u2[0] = u0; v2[0] = v0
+u2[1] = ua(step2); v2[1] = va(step2)
+
+for i in range(2, N2):
+  u2[i] = Lf(u2[i - 2], u2[i - 1], v2[i - 2], v2[i - 1], step2)[0]
+  v2[i] = Lf(u2[i - 2], u2[i - 1], v2[i - 2], v2[i - 1], step2)[1]
+
+
+#Stability limit/5
+N3 = int(tf / step3) + 1
+u3 = np.zeros(N3); v3 = np.zeros(N3)
+u3[0] = u0; v3[0] = v0
+u3[1] = ua(step3); v3[1] = va(step3)
+
+for i in range(2, N3):
+  u3[i] = Lf(u3[i - 2], u3[i - 1], v3[i - 2], v3[i - 1], step3)[0]
+  v3[i] = Lf(u3[i - 2], u3[i - 1], v3[i - 2], v3[i - 1], step3)[1]
+
+#Plot
+x = np.linspace(t0, tf, 200)
+plt.figure()
+plt.subplot(211)
+plt.plot(x, ua(x), label = "Exact", linewidth = 2)  
+plt.plot(np.linspace(t0, tf, N1), u1, '.-', label = "Numerical, step=1") 
+plt.legend()
+plt.grid()
+plt.ylabel("u(t)")
+plt.subplot(212)
+plt.plot(x, ua(x), label = "Exact", linewidth = 3)  
+plt.plot(np.linspace(t0, tf, N2), u2, '.-', label = "Numerical, step=0.5")
+plt.plot(np.linspace(t0, tf, N3), u3, '.-', label = "Numerical, step=0.2", markersize = 4) 
+plt.legend()
+plt.grid()
+plt.ylabel("u(t)")
+plt.xlabel("t") 
+
+
+#Stability limit/2 + Euler
+Ne = int(tf / step2) + 1
+u2e = np.zeros(Ne); v2e = np.zeros(Ne)
+u2e[0] = u0; v2e[0] = v0
+
+#Euler step = main step
+u2e[1] = Eu(u0, v0, step2)[0]; v2e[1] = Eu(u0, v0, step2)[1]
+
+for i in range(2, Ne):
+  u2e[i] = Lf(u2e[i - 2], u2e[i - 1], v2e[i - 2], v2e[i - 1], step2)[0]
+  v2e[i] = Lf(u2e[i - 2], u2e[i - 1], v2e[i - 2], v2e[i - 1], step2)[1]
+
+plt.plot(np.linspace(t0, tf, Ne), u2e, '-', label = "1 step Euler")  
+plt.grid(True)
+plt.ylabel("u(t)")
+plt.xlabel("t") 
+
+
+#Euler step = main step / 2
+u05 = Eu(u0, v0, step2 / 2)[0]; v05 = Eu(u0, v0, step2 / 2)[1]
+u2e[1] = Eu(u05, v05, step2 / 2)[0]; v2e[1] = Eu(u05, v05, step2 / 2)[1]
+
+for i in range(2, Ne):
+  u2e[i] = Lf(u2e[i - 2], u2e[i - 1], v2e[i - 2], v2e[i - 1], step2)[0]
+  v2e[i] = Lf(u2e[i - 2], u2e[i - 1], v2e[i - 2], v2e[i - 1], step2)[1]
+
+x = np.linspace(t0, tf, 200)
+plt.plot(x, ua(x), label = "Exact")  
+plt.plot(np.linspace(t0, tf, Ne), u2e, '--', label = "2 step Euler")  
+plt.legend()
+
+
+# local mistake, Euler step = main step / 10
+Ne = 11
+#Stability limit
+N1 = int(tf / step1) + 1
+u1 = np.zeros(N1); v1 = np.zeros(N1); er1 = np.zeros(N1)
+u05 = np.zeros(Ne); v05 = np.zeros(Ne)
+u1[0] = u0; v1[0] = v0
+u05[0] = u0; v05[0] = v0
+
+for i in range(1, Ne):
+  u05[i] = Eu(u05[i - 1], v05[i - 1], step1 / 10)[0]
+  v05[i] = Eu(u05[i - 1], v05[i - 1], step1 / 10)[1]
+
+u1[1] = u05[Ne - 1]; v1[1] = v05[Ne - 1]; er1[1] = u1[1] - ua(step1)
+for i in range(2, N1):
+  u1[i] = Lf(u1[i - 2], u1[i - 1], v1[i - 2], v1[i - 1], step1)[0]
+  v1[i] = Lf(u1[i - 2], u1[i - 1], v1[i - 2], v1[i - 1], step1)[1]
+  er1[i] = u1[i] - ua(step1 * i)
+
+plt.figure()
+plt.subplot(311)
+plt.plot(np.linspace(t0, tf, N1), er1, '.-', label = "Step=1") 
+plt.grid(True)
+plt.legend()
+plt.tick_params('x', labelbottom=False)
+
+
+#Stability limit/2
+N2 = int(tf / step2) + 1
+u2 = np.zeros(N2); v2 = np.zeros(N2); er2 = np.zeros(N2)
+u05 = np.zeros(Ne); v05 = np.zeros(Ne)
+u2[0] = u0; v2[0] = v0
+u05[0] = u0; v05[0] = v0
+
+for i in range(1, Ne):
+  u05[i] = Eu(u05[i - 1], v05[i-1], step2 / 10)[0]
+  v05[i] = Eu(u05[i - 1], v05[i-1], step2 / 10)[1]
+
+u2[1] = u05[Ne - 1]; v2[1] = v05[Ne - 1]; er2[1] = u2[1] - ua(step2)
+for i in range(2, N2):
+  u2[i] = Lf(u2[i - 2], u2[i - 1], v2[i - 2], v2[i - 1], step2)[0]
+  v2[i] = Lf(u2[i - 2], u2[i - 1], v2[i - 2], v2[i - 1], step2)[1]
+  er2[i] = u2[i] - ua(step2 * i)
+
+plt.subplot(312)
+plt.plot(np.linspace(t0, tf, N2), er2, '.-', label = "Step=0.5") 
+plt.grid(True)
+plt.ylabel("Error", size = 20)
+plt.legend()
+plt.tick_params('x', labelbottom=False)
+
+
+#Stability limit/5
+N3 = int(tf / step3) + 1
+u3 = np.zeros(N3); v3 = np.zeros(N3); er3 = np.zeros(N3)
+u05 = np.zeros(Ne); v05 = np.zeros(Ne)
+u3[0] = u0; v3[0] = v0
+u05[0] = u0; v05[0] = v0
+
+for i in range(1, Ne):
+  u05[i] = Eu(u05[i - 1], v05[i - 1], step3 / 10)[0]
+  v05[i] = Eu(u05[i - 1], v05[i - 1], step3 / 10)[1]
+
+u3[1] = u05[Ne - 1]; v3[1] = v05[Ne - 1]; er3[1] = u3[1] - ua(step3)
+for i in range(2, N3):
+  u3[i] = Lf(u3[i - 2], u3[i - 1], v3[i - 2], v3[i - 1], step3)[0]
+  v3[i] = Lf(u3[i - 2], u3[i - 1], v3[i - 2], v3[i - 1], step3)[1]
+  er3[i] = u3[i] - ua(step3 * i)
+
+plt.subplot(313)
+plt.plot(np.linspace(t0, tf, N3), er3, '.-', label = "Step=0.2") 
+plt.grid(True)
+plt.legend()
+plt.xlabel("t", size = 15) 
+\end{lstlisting}
+\newpage
+\section{Результаты}
+График точного аналитического решения и графики численных решений для 3 шагов сетки: на границе устойчивости схемы (1), в два раза меньше границы устойчивости (0.5), в 5 раз меньше границы устойчивости (0.2). В следующем за начальным узле сетки использовано аналитическое решение.
+\begin{figure}[h]
+\center{\includegraphics[scale=1.2]{2_1.png}}
+\label{fig:image}
+\end{figure}
+\newpage
+График точного аналитического решения и графики численных решений для шага сетки в 2 раз меньше границы устойчивости (0.5). В следующем за начальным узле сетки использовано решение, найденное с помощью схемы Эйлера: с шагом равным шагу основной сетки, с шагом в 2 раза меньше шага основной сетки.
+\begin{figure}[h]
+\center{\includegraphics[scale=1.1]{2_2.png}}
+\label{fig:image}
+\end{figure}
+\newpage
+Графики локальной ошибкидля трёх рассмотренных шагов интегрирования (1, 0.2, 0.5). Значение функции в первом узле вычислено по схеме Эйлера с шагом в 10 раз меньше шага основной сетки.
+\begin{figure}[h]
+\center{\includegraphics[scale=1.2]{2_3.png}}
+\label{fig:image}
+\end{figure}
+\end{document} % КОНЕЦ ДОКУМЕНТА !
